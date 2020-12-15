@@ -4,85 +4,171 @@ import java.util.Scanner;
 
 public class WAR {
 
-	public static void main(String[] args)throws Exception {
-		Scanner sc = new Scanner(System.in);
-		// number of players
-		int players = 2;
+	static String[] suits= {"Clubs", "Diamond", "Heart","Spear"};
+	
+	static private int players=2; // number of players
+	static Scanner sc = new Scanner(System.in); // the scanner to read console;
+	static int[] deck=new int[52];
+	static int cardsPerPlayer = 0;
+	static int maxRounds=10;
+	
 
-		ArrayList <Integer> deck = new ArrayList<Integer>();
+	public static void main(String[] args) {
+		// initialization
 		
-		for(int i=0;i<52;i++) {
-			deck.add(i);
+		System.out.print("Please input the maximum rounds for the game: ");
+		maxRounds=sc.nextInt();
+		
+		cardsPerPlayer=deck.length/players;
+		for(int i=0;i<deck.length;i++) {
+			deck[i]=i;
 		}
-		
-		int cardsPerPlayer = deck.size()/players;
 		
 		// shuffle
-		Random random = new Random(deck.size());
-		for (int i = 0; i < deck.size(); i++) {
-			int r = random.nextInt(deck.size());
-			int temp = deck.get(r);
-			deck.set(r, deck.get(i));
-			deck.set(i,temp);
-		}
+		shuffleDeck(deck);
+		
+		
+		
+		int[][] tiles = new int[players][deck.length];
+		int[] sizeOfTiles = new int[players];
+		initializeTiles(tiles,sizeOfTiles);
+		
 		
 		int cardSelect;
-		ArrayList<Integer>[] tiles = new ArrayList[players];
-		for(int i=0;i<players;i++) {
-			tiles[i]=new ArrayList<>();
-		}
-		int person = 0;
-		for(int deckIndex=0;deckIndex<deck.size();deckIndex++) {
-			tiles[person].add(deck.get(deckIndex));
-			person = (person+1) % players;
-		}
+		
 		int personsInGame = players;
-		for(int i=0;personsInGame>1;i++) {
+		int rounds=0;
+		while (personsInGame>1 && rounds<maxRounds) {
 			int winner=0;
 			int maxCard = Integer.MIN_VALUE;
-			ArrayList<Integer> drawnCards = new ArrayList<>();
-			for(int j=0;j<players;j++) {
-				System.out.print("You have " + tiles[j].size() + " cards. Please choose a card to be drawn: ");
+			int[] drawnCards=new int[deck.length];
+			int sizeOfDrawnCards=0;
+			
+			for(int person=0;person<players;person++) {
+				
+				System.out.print("Player "+person+" has " + sizeOfTiles[person] + " cards. Please choose a card to be drawn: ");
 				cardSelect = sc.nextInt();
 				
-			
-				int cardNum = getCardNum(tiles[j].get(cardSelect));
-				drawnCards.add(tiles[j].get(cardSelect));
-				tiles[j].remove(cardSelect);
+				int cardId=tiles[person][cardSelect];
+				System.out.println("You have drawn "+ getCardFace(cardId));
+				int cardNum = getCardNum(cardId);
+				sizeOfDrawnCards=addCardToTile(drawnCards,sizeOfDrawnCards,cardNum);
+				sizeOfTiles[person]=removeCardFromTile(tiles[person],sizeOfTiles[person],cardSelect);
+				
 				if(cardNum > maxCard) {
 					maxCard = cardNum;
-					winner = j;
-					
+					winner = person;
 				}
 			}
-			tiles[winner].addAll(drawnCards);
-			personsInGame = getPersonsInGame(tiles);
 			
+			sizeOfTiles[winner]=mergeTiles(tiles[winner],sizeOfTiles[winner], drawnCards, sizeOfDrawnCards);
+			sizeOfDrawnCards=clearTile(drawnCards,sizeOfDrawnCards);
+			personsInGame = getPersonsInGame(tiles,sizeOfTiles);
+			
+			rounds++;
+			
+			System.out.println("The winner of this round is "+winner);
+			System.out.println("Status after this round : ");
+			for (int i=0;i<players;i++) {
+				System.out.print(sizeOfTiles[i]+" ");
+			}
+			System.out.println();
 				
 		}
-		System.out.println("Game over, the winner is " + getWinner(tiles));
+		System.out.println("Totaly "+rounds+" reached, the winner is " + getWinner(tiles,sizeOfTiles));
 		
 		
 	}
+	
+	static private int mergeTiles(int[] tile1, int tileSize1, int[] tile2, int tileSize2) {
+		for (int i=0;i<tileSize2;i++) {
+			tile1[i+tileSize1]=tile2[i];
+		}
+		return tileSize1+tileSize2;
+	}
+	
+	static private int clearTile(int[] tile, int tileSize) {
+		return 0;
+	}
+	
+	static private int removeCardFromTile(int[] tile, int sizeOfTile, int tileIndex) {
+		for (int i=tileIndex;i<sizeOfTile-2;i++) {
+			tile[i]=tile[i+1];
+		} 
+		return sizeOfTile-1;
+	}
 
-	private static int getWinner(ArrayList<Integer>[] tiles)throws Exception {
-		int winner;
+	private static void initializeTiles(int[][] tiles, int[] sizeOfTiles) {
+
+		for(int i=0;i<players;i++) {
+			sizeOfTiles[i]=0;
+		}
+		
+		// allocate cards to tiles;
+		int person = 0;
+		for(int deckIndex=0;deckIndex<deck.length;deckIndex++) {
+			sizeOfTiles[person]=addCardToTile(tiles[person],sizeOfTiles[person],deck[deckIndex]);
+			person = (person+1) % players;
+		}
+	}
+
+	private static int addCardToTile(int[] tile, int originalSize, int cardId) {
+		tile[originalSize]=cardId;
+		return originalSize+1;
+	}
+
+	private static void shuffleDeck(int[] deck) {
+		Random random = new Random(deck.length);
+		for (int i = 0; i < deck.length; i++) {
+			int r = random.nextInt(deck.length);
+			int temp = deck[r];
+			deck[r]=deck[i];
+			deck[i]=temp;
+		}
+	}
+
+	private static int getWinner(int[][] tiles, int[] sizeOfTiles) {
+		int maxScore=Integer.MIN_VALUE;
+		int winner=-1;
 		for(int i=0;i<tiles.length;i++) {
-			if(tiles[i].size() > 0) {
-				return i;
+			if(sizeOfTiles[i] > maxScore) {
+				maxScore=sizeOfTiles[i];
+				winner=i;
 			}
 		}
-		throw new Exception("Should not be here.");
+		return winner;
 	}
 
-	private static int getPersonsInGame(ArrayList<Integer>[] tiles) {
-		// TODO Auto-generated method stub
-		return 0;
+	private static int getPersonsInGame(int[][] tiles, int[] sizesOfTiles) {
+		int personsInGame=0;
+		for (int person=0;person<sizesOfTiles.length;person++) {
+			if (sizesOfTiles[person]>0) 
+				personsInGame++;
+		}
+		return personsInGame;
 	}
 
-	private static int getCardNum(Integer cardID) {
+	private static int getCardNum(int cardID) {
 		// TODO Auto-generated method stub
-		return 0;
+		int cardNum=cardID%13;
+		if (cardNum==0) cardNum+=13;
+		return cardNum;
+		
+	}
+	
+	private static String getCardFace(int cardId) {
+		int suit=cardId/13;
+		int cardNum=cardId%13;
+		String face=suits[suit];
+		if (cardNum==0) {
+			return face+" Ace";
+		} else if (cardNum>=10) {
+			cardNum-=10;
+			return face+" "+(char)('J'+cardNum);
+		} else {
+			return face+" "+(cardNum+1);
+		}
+		
 	}
 
 }
