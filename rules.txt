@@ -1,0 +1,23 @@
+------------------------
+RULES TO THE GAME OF WAR
+------------------------
+
+1. Between two players, 26 cards will be dealed to both hands as a 52 deck 
+   of cards dealt equally makes 26 per player.
+
+2. Without knowing which cards the players hold, the two players will be asked 
+   to choose a card out of their hand.
+
+3. The card will be revealed and whoever has the card with the highest rank will
+   win the round.
+
+4. The winner of the round will collect all cards that have been played that round to their hand.
+
+5. A winner will be declared in two conditions, one being that a player has collected all 52 cards 
+   and in the second case, a winner will be selected if the total number of prompted rounds has been  
+   reached and the player with the most collected cards at the instance will win the game.
+6. Have fun and become a victor of war :)
+
+------------------------
+
+------------------------
